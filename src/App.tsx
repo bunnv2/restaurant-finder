@@ -1,10 +1,19 @@
 import React, { useState, useEffect} from 'react';
-import firebase from 'firebase/app';
-import 'firebase/firestore';
-import 'firebase/auth';
+import { initializeApp } from "firebase/app";
+import { GoogleAuthProvider, getAuth, signInWithPopup, signInWithEmailAndPassword, createUserWithEmailAndPassword, sendPasswordResetEmail, signOut } from "firebase/auth";
+import {  getFirestore,  query,  getDocs,  collection,  where,  addDoc } from "firebase/firestore";
+import { useAuthState } from 'react-firebase-hooks/auth';
+import { useCollectionData } from 'react-firebase-hooks/firestore';
+import SignIn from './Components/SignIn';
+import { Box, Menu, ThemeProvider } from '@mui/material';
+import { createTheme, makeStyles } from '@mui/material/styles';
+import Button from '@mui/material/Button';
+import Container from '@mui/material/Container/Container';
+import blue from '@mui/material/colors/blue';
+import { ReactComponent as MySVG } from './logo.svg';
 
 
-const firebaseConfig = {
+const app = initializeApp({
   apiKey: process.env.REACT_APP_API_KEY,
   authDomain: process.env.REACT_APP_AUTH_DOMAIN,
   projectId: process.env.REACT_APP_PROJECT_ID,
@@ -12,33 +21,25 @@ const firebaseConfig = {
   messagingSenderId: process.env.REACT_APP_SENDER_ID,
   appId: process.env.REACT_APP_APP_ID,
   measurementId: process.env.REACT_APP_MEASSUEMENT_ID,
-};
+});
 
 
-// initialize firebase app
-// firebase.initializeApp(firebaseConfig);
+const auth = getAuth(app);
+const db = getFirestore(app);
+
+function SignInWithGoogleButton() {
+    const provider = new GoogleAuthProvider();
+    signInWithPopup(auth, provider);
+  };
+
 
 function App() {
   const [restaurants, setRestaurants] = useState([]);
-
-  const handleSearchRestaurants = async () => {
-    // make api call to get restaurants
-    const response = await fetch('https://api.example.com/restaurants');
-    const data = await response.json();
-    setRestaurants(data);
-  };
-
-  // const handleSaveFavorite = (restaurant) => {
-  //   // save restaurant as favorite in Firebase database
-  //   const db = firebase.firestore();
-  //   db.collection('favorites').add(restaurant);
-  // };
-
+  const [user] = useAuthState( auth );
 
   const getRestaurants = async () => {
-    console.log('yoo')
     const url = 'https://travel-advisor.p.rapidapi.com/restaurants/list?location_id=274764&currency=PLN&lunit=km&limit=30&open_now=false&lang=pl_PL';
-
+    
     const options = {
       method: 'GET',
       headers: {
@@ -46,7 +47,7 @@ function App() {
         'X-RapidAPI-Host': 'travel-advisor.p.rapidapi.com'
       }
     };
-
+    
     try {
       const response = await fetch(url, options)
       const restaurant = await response.json()
@@ -56,18 +57,55 @@ function App() {
     }
   }
 
-  useEffect(() => {
-    console.log(restaurants);
-  }, [restaurants]);
+  const getUserRestaurants = async () => {
+    const userRef = collection(db, 'users');
+  }
+
+  const theme = createTheme({
+    palette: {
+      primary: blue,
+    },
+  });
 
   return (
-    <div>
-      <h1>Search for Restaurants</h1>
-      <button onClick={getRestaurants}>Search</button>
-      <ul>
-        yoo
-      </ul>
-    </div>
+    <ThemeProvider theme={theme}>
+      <Container component="main" maxWidth="xs" style={{backgroundColor: '#f6f6'}}>
+      {/* menu */}
+      <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+        <MySVG
+          style={{
+            width: '100px',
+            height: '100px',
+            marginTop: '20px',
+            marginBottom: '20px',
+          }}
+          
+        />
+        <h1>Restaurants Finder</h1>
+        <h4>Find the best restaurants in your city</h4>
+      
+      </Box>
+
+      <Box
+            sx={{
+              marginTop: 8,
+              display: 'flex',
+              flexDirection: 'column',
+              alignItems: 'center',
+            }}
+          >
+        {user ? (
+          <div>
+            <Button onClick={getUserRestaurants}>Your restaurants</Button>
+            <Button onClick={()=>signOut(auth)}>Sign Out</Button>
+            <Button onClick={getRestaurants}>Get Restaurants</Button>
+          </div>
+        ) : (
+          <SignIn signInWithGoogle={SignInWithGoogleButton} />
+        )}
+      </Box>
+    </Container>
+    </ThemeProvider>
   );
 }
 
