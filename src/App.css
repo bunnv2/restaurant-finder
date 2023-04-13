@@ -21,8 +21,10 @@
 
 /*  */
 
-.app {
-  text-align: center;
-  /* centered content */
-
+.app-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 8px;
+  margin: 8px;
 }

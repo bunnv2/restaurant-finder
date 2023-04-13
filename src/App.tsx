@@ -1,17 +1,16 @@
 import React, { useState, useEffect} from 'react';
 import { initializeApp } from "firebase/app";
-import { GoogleAuthProvider, getAuth, signInWithPopup, signInWithEmailAndPassword, createUserWithEmailAndPassword, sendPasswordResetEmail, signOut } from "firebase/auth";
-import {  getFirestore,  query,  getDocs,  collection,  where,  addDoc } from "firebase/firestore";
+import { GoogleAuthProvider, getAuth, signInWithPopup, signOut } from "firebase/auth";
+import {  getFirestore, collection} from "firebase/firestore";
 import { useAuthState } from 'react-firebase-hooks/auth';
 import { useCollectionData } from 'react-firebase-hooks/firestore';
 import SignIn from './Components/SignIn';
-import { Box, Menu, ThemeProvider } from '@mui/material';
-import { createTheme, makeStyles } from '@mui/material/styles';
-import Button from '@mui/material/Button';
-import Container from '@mui/material/Container/Container';
+import { AppBar, Box, Button, Container, Menu, Theme, ThemeProvider, Toolbar, Typography, createTheme, Tab, Tabs } from '@mui/material';
+import { TabContext, TabPanel } from '@mui/lab';
 import blue from '@mui/material/colors/blue';
+import LogoutIcon from '@mui/icons-material/Logout';
 import { ReactComponent as MySVG } from './logo.svg';
-
+// import { makeStyles } from '@mui/material/styles';
 
 const app = initializeApp({
   apiKey: process.env.REACT_APP_API_KEY,
@@ -36,6 +35,11 @@ function SignInWithGoogleButton() {
 function App() {
   const [restaurants, setRestaurants] = useState([]);
   const [user] = useAuthState( auth );
+  const [activeTab, setActiveTab] = useState('1');
+
+  const handleTabChange = (event: React.SyntheticEvent, newValue: string) => {
+    setActiveTab(newValue);
+  };
 
   const getRestaurants = async () => {
     const url = 'https://travel-advisor.p.rapidapi.com/restaurants/list?location_id=274764&currency=PLN&lunit=km&limit=30&open_now=false&lang=pl_PL';
@@ -63,49 +67,110 @@ function App() {
 
   const theme = createTheme({
     palette: {
-      primary: blue,
+      primary: {
+        main: '#2196f3',
+      },
+      secondary: {
+        main: '#000000',
+      },
+      error: {
+        main: '#f44336',
+      },
+      warning: {
+        main: '#ffa726',
+      },
+      info: {
+        main: '#29b6f6',
+      },
+      success: {
+        main: '#66bb6a',
+      },
+
     },
   });
 
   return (
-    <ThemeProvider theme={theme}>
-      <Container component="main" maxWidth="xs" style={{backgroundColor: '#f6f6'}}>
-      {/* menu */}
-      <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
-        <MySVG
-          style={{
-            width: '100px',
-            height: '100px',
-            marginTop: '20px',
-            marginBottom: '20px',
-          }}
-          
-        />
-        <h1>Restaurants Finder</h1>
-        <h4>Find the best restaurants in your city</h4>
-      
-      </Box>
-
-      <Box
-            sx={{
-              marginTop: 8,
-              display: 'flex',
-              flexDirection: 'column',
-              alignItems: 'center',
-            }}
-          >
-        {user ? (
-          <div>
-            <Button onClick={getUserRestaurants}>Your restaurants</Button>
-            <Button onClick={()=>signOut(auth)}>Sign Out</Button>
-            <Button onClick={getRestaurants}>Get Restaurants</Button>
-          </div>
-        ) : (
-          <SignIn signInWithGoogle={SignInWithGoogleButton} />
-        )}
-      </Box>
-    </Container>
-    </ThemeProvider>
+    (
+      <ThemeProvider  theme={theme}>
+      <TabContext value={activeTab}>
+        <AppBar position="static">
+          <Toolbar variant="regular">
+            {!user ? (
+              <>
+                <Typography variant="h6" textAlign="center" margin="auto" color="secondary">
+                  Restaurant Finder
+                </Typography>
+              </>
+            ) : (
+              <>
+                <Tabs
+                  value={activeTab}
+                  onChange={handleTabChange}
+                  textColor="secondary"
+                  indicatorColor="secondary"
+                  aria-label="secondary tabs example"
+                  sx={{ flexGrow: 1 }}
+                > 
+                  <Tab value="1" label="NEW" />
+                  <Tab value="2" label="SAVED" />
+                </Tabs> 
+                <Button onClick={() => signOut(auth)} color="secondary" > 
+                  <LogoutIcon />
+                </Button>
+              </>
+            )}
+          </Toolbar>
+        </AppBar>
+        <Container>
+          {!user ? ( 
+            <>
+          <Typography variant="h4" component="h1" justifyContent="center" textAlign="center" marginTop={5}>
+            Find the best food around you
+          </Typography>
+          <Box display="flex" justifyContent="center" marginTop={2} marginBottom={2}>
+            <MySVG width="150px" height="150px"/>
+          </Box>
+          <Typography variant="body1">
+            Discover new places to eat, read reviews, and make reservations with ease. Sign in to start exploring now.
+          </Typography>
+          <Box display="flex" justifyContent="center" marginTop={10}>
+            {/* make space */}
+            <Button
+              onClick={SignInWithGoogleButton}
+              variant="contained"
+              color="primary"
+              startIcon={
+                <img
+                className="google-logo"
+                src="https://upload.wikimedia.org/wikipedia/commons/5/53/Google_%22G%22_Logo.svg"
+                alt="Google logo"
+                width={20}
+                height={20}
+                />
+              }
+            >
+              Sign in with Google
+            </Button>
+          </Box>
+          </>
+          ) : (
+            <>
+              <TabPanel value='1'>
+                <Typography variant="h4" component="h1" marginTop={5}>
+                  Find the best restaurants around you
+                </Typography>
+              </TabPanel>
+              <TabPanel value='2'>
+                <Typography variant="h4" component="h1" marginTop={5}>
+                  saved
+                </Typography>
+              </TabPanel>
+            </>
+          )}
+        </Container>
+      </TabContext>
+      </ThemeProvider>
+    )
   );
 }
 
