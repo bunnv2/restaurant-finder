@@ -3,15 +3,17 @@ import firebase from 'firebase/app';
 import 'firebase/firestore';
 import 'firebase/auth';
 
+
 const firebaseConfig = {
-  apiKey: "AIzaSyCs_ULfo0RySzk8bVEneGl5lxz00-jo74w",
-  authDomain: "restaurant-finder-mim.firebaseapp.com",
-  projectId: "restaurant-finder-mim",
-  storageBucket: "restaurant-finder-mim.appspot.com",
-  messagingSenderId: "553963630435",
-  appId: "1:553963630435:web:6713bdea3d49704e5fed56",
-  measurementId: "G-H9BB9400RY"
+  apiKey: process.env.REACT_APP_API_KEY,
+  authDomain: process.env.REACT_APP_AUTH_DOMAIN,
+  projectId: process.env.REACT_APP_PROJECT_ID,
+  storageBucket: process.env.REACT_APP_STORAGE_BUCKET,
+  messagingSenderId: process.env.REACT_APP_SENDER_ID,
+  appId: process.env.REACT_APP_APP_ID,
+  measurementId: process.env.REACT_APP_MEASSUEMENT_ID,
 };
+
 
 // initialize firebase app
 // firebase.initializeApp(firebaseConfig);
@@ -34,8 +36,7 @@ function App() {
 
 
   const getRestaurants = async () => {
-    const fetch = require('node-fetch');
-
+    console.log('yoo')
     const url = 'https://travel-advisor.p.rapidapi.com/restaurants/list?location_id=274764&currency=PLN&lunit=km&limit=30&open_now=false&lang=pl_PL';
 
     const options = {
