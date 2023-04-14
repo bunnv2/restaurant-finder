@@ -1,10 +1,10 @@
 import React, { useState, useEffect} from 'react';
 import { initializeApp } from "firebase/app";
 import { GoogleAuthProvider, getAuth, signInWithPopup, signOut } from "firebase/auth";
-import {  getFirestore, collection, doc, setDoc} from "firebase/firestore";
+import {  getFirestore, collection, doc, setDoc, getDocs} from "firebase/firestore";
 import { useAuthState } from 'react-firebase-hooks/auth';
 import { useCollectionData } from 'react-firebase-hooks/firestore';
-import { AppBar, Box, Button, Container, Menu, Theme, ThemeProvider, Toolbar, Typography, createTheme, Tab, Tabs } from '@mui/material';
+import { AppBar, Box, Button, Container, Menu, Theme, ThemeProvider, Toolbar, Typography, createTheme, Tab, Tabs, CircularProgress } from '@mui/material';
 import { TabContext, TabPanel } from '@mui/lab';
 import LogoutIcon from '@mui/icons-material/Logout';
 import { ReactComponent as MySVG } from './logo.svg';
@@ -35,13 +35,19 @@ function App() {
   const [restaurants, setRestaurants] = useState([]);
   const [user] = useAuthState( auth );
   const [activeTab, setActiveTab] = useState('2');
+  const [isFetching, setIsFetching] = useState(false);
 
-  const handleTabChange = (event: React.SyntheticEvent, newValue: string) => {
+
+
+
+  const handleTabChange = async (event: React.SyntheticEvent, newValue: string) =>  {
     if (newValue === '1' && activeTab !== '1') {
       const offset = Math.floor(Math.random() * 100);
-      getRestaurants(offset);
-    } else {
-      getUserRestaurants();
+      setIsFetching(true);
+      setRestaurants([]);
+      await getRestaurants(offset);
+    } else if(newValue === '2') {
+      await getUserRestaurants();
     }
     setActiveTab(newValue);
 
@@ -49,11 +55,9 @@ function App() {
 
   const addToFavorites = async (restaurant: restaurant) => {
     if (user) {
-      // Create a reference to the user's favorite restaurants collection
       const userFavoritesRef = collection(db, "users", user.uid, "favorites");
       const restaurantRef = doc(userFavoritesRef);
 
-      // Add the restaurant to the user's favorite restaurants collection
       try {
         const dbRestaurant = {
           name: restaurant.name || "",
@@ -61,8 +65,14 @@ function App() {
           phone: restaurant.phone || "",
           website: restaurant.website || "",
           rating: restaurant.rating || "",
-          photo: restaurant.photo.images.large.url || "",
-        }
+          photo:{
+            images: {
+              large: {
+                url: restaurant.photo.images.large.url || "",
+              }
+            }
+          } 
+        };
         await setDoc(restaurantRef, dbRestaurant);
         console.log("Added to favorites:", restaurant.name);
       } catch (error) {
@@ -93,14 +103,27 @@ function App() {
         }
       })
       setRestaurants(restaurants)
+      setIsFetching(false);
     } catch (error) {
       console.log(error)
     }
   }
 
   const getUserRestaurants = async () => {
-    const userRef = collection(db, 'users');
+    const userFavoritesRef = collection(db, "users", user.uid, "favorites");
+    const userFavoritesSnapshot = await getDocs(userFavoritesRef);
+    const userFavorites = userFavoritesSnapshot.docs.map((doc) => doc.data()) as restaurant[];
+    setRestaurants(userFavorites as any);
   }
+
+  useEffect( () => {
+    async function getRestaurantsOnMount() {
+      if (user) {
+        await getUserRestaurants();
+      } 
+    }
+    getRestaurantsOnMount();
+  }, [user])
 
   const theme = createTheme({
     palette: {
@@ -192,15 +215,25 @@ function App() {
           </>
           ) : (
             <>
+              {isFetching ? (
+                <>
+                <Box display="flex" justifyContent="center" marginTop={10}>
+                  <CircularProgress />
+                </Box>
+                </>
+              ) : (
+
               <TabPanel value='1'>
-                {/* loop trough restaurants */}
                 {restaurants.map((restaurant: any) => (
-                  <RestaurantCard restaurant={restaurant} theme={theme} addToFavorites={addToFavorites} />
+                  <RestaurantCard restaurant={restaurant} theme={theme} addToFavorites={addToFavorites} tabPanel='1' />
                 ))}
               </TabPanel>
+              )}
               <TabPanel value='2'>
                 <Typography variant="h4" component="h1" marginTop={1}>
-                  saved
+                {restaurants.map((restaurant: any) => (
+                  <RestaurantCard restaurant={restaurant} theme={theme} addToFavorites={addToFavorites} tabPanel='2' />
+                ))}
                 </Typography>
               </TabPanel>
             </>

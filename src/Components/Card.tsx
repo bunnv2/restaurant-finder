@@ -33,13 +33,14 @@ interface Props {
   restaurant: restaurant;
   theme: Theme;
   addToFavorites: (restaurant: restaurant) => void;
+  tabPanel: '1' | '2';
 }
 
 export default function RestaurantCard(props: Props) {
   const { restaurant } = props;
   const { theme } = props;
 
-  
+  if (props.tabPanel==="2") console.log(restaurant);
 
 
   return (
@@ -48,8 +49,7 @@ export default function RestaurantCard(props: Props) {
       <CardHeader
         title={restaurant.name}
         subheader={restaurant.address}
-        titleTypographyProps={{color:'secondary'}}
-/>
+        titleTypographyProps={{color:'secondary'}} />
       <CardMedia
         component="img"
         src={restaurant.photo.images.large.url}
@@ -63,9 +63,11 @@ export default function RestaurantCard(props: Props) {
         </Typography>
       </CardContent>
       <CardActions disableSpacing>
-        <IconButton aria-label="add to favorites" onClick={()=>props.addToFavorites(restaurant)}>
-          <FavoriteIcon color='error' />
-        </IconButton>
+        {props.tabPanel === '1' && 
+          <IconButton aria-label="add to favorites" onClick={()=>props.addToFavorites(restaurant)}>
+            <FavoriteIcon color='error' />
+          </IconButton>
+        }
         <IconButton aria-label="add to favorites">
         <Link to={restaurant.website}><LinkIcon color='info' /></Link>
         </IconButton>
