@@ -1,12 +1,12 @@
 import React, { useState, useEffect} from 'react';
 import { initializeApp } from "firebase/app";
-import { GoogleAuthProvider, getAuth, signInWithPopup, signOut } from "firebase/auth";
+import { GoogleAuthProvider, getAuth, signInWithPopup, signInWithRedirect, signOut, onAuthStateChanged } from "firebase/auth";
 import {  getFirestore, collection, doc, setDoc, getDocs} from "firebase/firestore";
 import { useAuthState } from 'react-firebase-hooks/auth';
-import { useCollectionData } from 'react-firebase-hooks/firestore';
 import { AppBar, Box, Button, Container, Menu, Theme, ThemeProvider, Toolbar, Typography, createTheme, Tab, Tabs, CircularProgress } from '@mui/material';
 import { TabContext, TabPanel } from '@mui/lab';
 import LogoutIcon from '@mui/icons-material/Logout';
+import AccessibilityIcon from '@mui/icons-material/Accessibility';
 import { ReactComponent as MySVG } from './logo.svg';
 import RestaurantCard, { restaurant } from './Components/Card';
 // import { makeStyles } from '@mui/material/styles';
@@ -27,7 +27,7 @@ const db = getFirestore(app);
 
 function SignInWithGoogleButton() {
     const provider = new GoogleAuthProvider();
-    signInWithPopup(auth, provider);
+    signInWithRedirect(auth, provider);
   };
 
 
@@ -36,9 +36,69 @@ function App() {
   const [user] = useAuthState( auth );
   const [activeTab, setActiveTab] = useState('2');
   const [isFetching, setIsFetching] = useState(false);
+  const [isSenior, setIsSenior] = useState(false);
 
+  const theme = createTheme({
+    palette: {
+      primary: {
+        main: '#2196f3',
+      },
+      secondary: {
+        main: '#000000',
+      },
+      error: {
+        main: '#f44336',
+      },
+      warning: {
+        main: '#ffa726',
+      },
+      info: {
+        main: '#29b6f6',
+      },
+      success: {
+        main: '#66bb6a',
+      },
 
+    },
+  });
 
+  const [currentTheme, setCurrentTheme] = useState(theme);
+
+const toggleSenior = () => {
+  setIsSenior(!isSenior);
+
+  let newTheme = createTheme({
+    palette: {
+      primary: {
+        main: !isSenior ? '#ff9800' : '#2196f3',
+      },
+      secondary: {
+        main: !isSenior ? '#000000' : '#000000',
+      },
+      error: {
+        main: !isSenior ? '#ff9800' : '#f44336',
+      },
+      warning: {
+        main: !isSenior ? '#ff9800' : '#ffa726',
+      },
+      info: {
+        main: !isSenior ? '#ff9800' : '#29b6f6',
+      },
+      success: {
+        main: !isSenior ? '#ff9800' : '#66bb6a',
+      },
+      background: {
+        default: !isSenior ? '#00000' : '#fafafa',
+        paper: !isSenior ?  '#424242' : '#ffffff',
+      },
+      text: {
+        primary: !isSenior ? '#00000' : '#00000',
+        secondary: !isSenior ? '#00000' : '#0000006b',
+      },
+    },
+  });
+  setCurrentTheme(newTheme);
+};
 
   const handleTabChange = async (event: React.SyntheticEvent, newValue: string) =>  {
     if (newValue === '1' && activeTab !== '1') {
@@ -116,6 +176,8 @@ function App() {
     setRestaurants(userFavorites as any);
   }
 
+
+
   useEffect( () => {
     async function getRestaurantsOnMount() {
       if (user) {
@@ -125,41 +187,22 @@ function App() {
     getRestaurantsOnMount();
   }, [user])
 
-  const theme = createTheme({
-    palette: {
-      primary: {
-        main: '#2196f3',
-      },
-      secondary: {
-        main: '#000000',
-      },
-      error: {
-        main: '#f44336',
-      },
-      warning: {
-        main: '#ffa726',
-      },
-      info: {
-        main: '#29b6f6',
-      },
-      success: {
-        main: '#66bb6a',
-      },
-
-    },
-  });
-
   return (
     (
-      <ThemeProvider  theme={theme}>
+      <ThemeProvider  theme={currentTheme}>
+        {/* make container full width */}
+      <div>
       <TabContext value={activeTab}>
         <AppBar position="static">
           <Toolbar variant="regular">
             {!user ? (
               <>
-                <Typography variant="h6" textAlign="center" margin="auto" color="secondary">
+                <Typography variant="h6" textAlign="center" margin="auto" color="secondary" {...(isSenior && { sx: { fontSize: '1.5rem' } })}>
                   Restaurant Finder
                 </Typography>
+                <Button onClick={() => toggleSenior()} color="secondary" >
+                  <AccessibilityIcon />
+                </Button>
               </>
             ) : (
               <>
@@ -171,11 +214,21 @@ function App() {
                   aria-label="secondary tabs example"
                   sx={{ flexGrow: 1 }}
                 > 
-                  <Tab value="1" label="NEW" />
-                  <Tab value="2" label="SAVED" />
+                  <Tab value="1" label="NEW" {...(isSenior && { sx: { fontSize: '1.5rem' } })}/>
+                  <Tab value="2" label="SAVED" {...(isSenior && { sx: { fontSize: '1.5rem' } })}/>
                 </Tabs> 
+                <Button onClick={() => toggleSenior()} color="secondary" >
+                  <AccessibilityIcon />
+                </Button>
+                
                 <Button onClick={() => signOut(auth)} color="secondary" > 
-                  <LogoutIcon />
+                  {!isSenior ? (
+                    <LogoutIcon />
+                  ) : (
+                    <Typography variant="h6" textAlign="center" margin="auto" color="secondary" {...(isSenior && { sx: { fontSize: '1.2rem', fontWeight:'bold' } })}>
+                      Sign Out
+                    </Typography>
+                  )}
                 </Button>
               </>
             )}
@@ -190,11 +243,11 @@ function App() {
           <Box display="flex" justifyContent="center" marginTop={2} marginBottom={2}>
             <MySVG width="150px" height="150px"/>
           </Box>
-          <Typography variant="body1" component="p" justifyContent="center" textAlign="center" marginTop={2} marginBottom={2}>
+          <Typography variant={!isSenior ? "body1" : "h4"}
+           component="p" justifyContent="center" textAlign="center" marginTop={2} marginBottom={2}>
             Discover new places to eat, read reviews, and make reservations with ease. Sign in to start exploring now.
           </Typography>
           <Box display="flex" justifyContent="center" marginTop={10}>
-            {/* make space */}
             <Button
               onClick={SignInWithGoogleButton}
               variant="contained"
@@ -208,6 +261,7 @@ function App() {
                 height={20}
                 />
               }
+              {...(isSenior && { sx: { fontSize: '1.5rem' } })}
             >
               Sign in with Google
             </Button>
@@ -225,14 +279,14 @@ function App() {
 
               <TabPanel value='1'>
                 {restaurants.map((restaurant: any) => (
-                  <RestaurantCard restaurant={restaurant} theme={theme} addToFavorites={addToFavorites} tabPanel='1' />
+                  <RestaurantCard restaurant={restaurant} theme={currentTheme} addToFavorites={addToFavorites} tabPanel='1' senior={isSenior}/>
                 ))}
               </TabPanel>
               )}
               <TabPanel value='2'>
                 <Typography variant="h4" component="h1" marginTop={1}>
                 {restaurants.map((restaurant: any) => (
-                  <RestaurantCard restaurant={restaurant} theme={theme} addToFavorites={addToFavorites} tabPanel='2' />
+                  <RestaurantCard restaurant={restaurant} theme={currentTheme} addToFavorites={addToFavorites} tabPanel='2' senior={isSenior}/>
                 ))}
                 </Typography>
               </TabPanel>
@@ -240,6 +294,7 @@ function App() {
           )}
         </Container>
       </TabContext>
+      </div>
       </ThemeProvider>
     )
   );
