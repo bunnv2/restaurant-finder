@@ -11,5 +11,5 @@ The page will reload if you make edits.\
 You will also see any lint errors in the console.
 
 
-### You can visit this app at: [https://restaurant-finder-mim.firebaseapp.com](restaurant-finder)
+### You can visit this app at: [restaurant-finder](https://restaurant-finder-mim.firebaseapp.com)
 
