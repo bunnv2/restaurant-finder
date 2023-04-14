@@ -12,7 +12,7 @@ import { Link } from 'react-router-dom';
 import LinkIcon from '@mui/icons-material/Link';
 import { Theme } from '@emotion/react';
 
-type restaurant = {
+export type restaurant = {
   name: string;
   address: string;
   phone: string;
@@ -32,6 +32,7 @@ type restaurant = {
 interface Props {
   restaurant: restaurant;
   theme: Theme;
+  addToFavorites: (restaurant: restaurant) => void;
 }
 
 export default function RestaurantCard(props: Props) {
@@ -58,11 +59,11 @@ export default function RestaurantCard(props: Props) {
           Rating: {restaurant.rating} 
         </Typography>
         <Typography variant="body2" color="secondary">
-        price: {restaurant.phone} 
+          Phone: {restaurant.phone} 
         </Typography>
       </CardContent>
       <CardActions disableSpacing>
-        <IconButton aria-label="add to favorites">
+        <IconButton aria-label="add to favorites" onClick={()=>props.addToFavorites(restaurant)}>
           <FavoriteIcon color='error' />
         </IconButton>
         <IconButton aria-label="add to favorites">

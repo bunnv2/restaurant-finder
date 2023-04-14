@@ -1,15 +1,14 @@
 import React, { useState, useEffect} from 'react';
 import { initializeApp } from "firebase/app";
 import { GoogleAuthProvider, getAuth, signInWithPopup, signOut } from "firebase/auth";
-import {  getFirestore, collection} from "firebase/firestore";
+import {  getFirestore, collection, doc, setDoc} from "firebase/firestore";
 import { useAuthState } from 'react-firebase-hooks/auth';
 import { useCollectionData } from 'react-firebase-hooks/firestore';
 import { AppBar, Box, Button, Container, Menu, Theme, ThemeProvider, Toolbar, Typography, createTheme, Tab, Tabs } from '@mui/material';
 import { TabContext, TabPanel } from '@mui/lab';
-import blue from '@mui/material/colors/blue';
 import LogoutIcon from '@mui/icons-material/Logout';
 import { ReactComponent as MySVG } from './logo.svg';
-import RestaurantCard from './Components/Card';
+import RestaurantCard, { restaurant } from './Components/Card';
 // import { makeStyles } from '@mui/material/styles';
 
 const app = initializeApp({
@@ -48,10 +47,30 @@ function App() {
 
   };
 
-  useEffect(() => {
-    console.log(restaurants)
-    console.log(typeof restaurants)
-  }, [restaurants]);
+  const addToFavorites = async (restaurant: restaurant) => {
+    if (user) {
+      // Create a reference to the user's favorite restaurants collection
+      const userFavoritesRef = collection(db, "users", user.uid, "favorites");
+      const restaurantRef = doc(userFavoritesRef);
+
+      // Add the restaurant to the user's favorite restaurants collection
+      try {
+        const dbRestaurant = {
+          name: restaurant.name || "",
+          address: restaurant.address || "",
+          phone: restaurant.phone || "",
+          website: restaurant.website || "",
+          rating: restaurant.rating || "",
+          photo: restaurant.photo.images.large.url || "",
+        }
+        await setDoc(restaurantRef, dbRestaurant);
+        console.log("Added to favorites:", restaurant.name);
+      } catch (error) {
+        console.error("Error adding to favorites:", error);
+      }
+    }
+  };
+
 
   const getRestaurants = async (offset: number) => {
     const url = `https://travel-advisor.p.rapidapi.com/restaurants/list?location_id=274764&currency=PLN&lunit=km&limit=30&open_now=false&lang=pl_PL&offset=${offset}`;
@@ -176,7 +195,7 @@ function App() {
               <TabPanel value='1'>
                 {/* loop trough restaurants */}
                 {restaurants.map((restaurant: any) => (
-                  <RestaurantCard restaurant={restaurant} theme={theme} />
+                  <RestaurantCard restaurant={restaurant} theme={theme} addToFavorites={addToFavorites} />
                 ))}
               </TabPanel>
               <TabPanel value='2'>
