@@ -4,12 +4,12 @@ import { GoogleAuthProvider, getAuth, signInWithPopup, signOut } from "firebase/
 import {  getFirestore, collection} from "firebase/firestore";
 import { useAuthState } from 'react-firebase-hooks/auth';
 import { useCollectionData } from 'react-firebase-hooks/firestore';
-import SignIn from './Components/SignIn';
 import { AppBar, Box, Button, Container, Menu, Theme, ThemeProvider, Toolbar, Typography, createTheme, Tab, Tabs } from '@mui/material';
 import { TabContext, TabPanel } from '@mui/lab';
 import blue from '@mui/material/colors/blue';
 import LogoutIcon from '@mui/icons-material/Logout';
 import { ReactComponent as MySVG } from './logo.svg';
+import RestaurantCard from './Components/Card';
 // import { makeStyles } from '@mui/material/styles';
 
 const app = initializeApp({
@@ -38,11 +38,23 @@ function App() {
   const [activeTab, setActiveTab] = useState('1');
 
   const handleTabChange = (event: React.SyntheticEvent, newValue: string) => {
+    if (newValue === '1' && activeTab !== '1') {
+      const offset = Math.floor(Math.random() * 100);
+      getRestaurants(offset);
+    } else {
+      getUserRestaurants();
+    }
     setActiveTab(newValue);
+
   };
 
-  const getRestaurants = async () => {
-    const url = 'https://travel-advisor.p.rapidapi.com/restaurants/list?location_id=274764&currency=PLN&lunit=km&limit=30&open_now=false&lang=pl_PL';
+  useEffect(() => {
+    console.log(restaurants)
+    console.log(typeof restaurants)
+  }, [restaurants]);
+
+  const getRestaurants = async (offset: number) => {
+    const url = `https://travel-advisor.p.rapidapi.com/restaurants/list?location_id=274764&currency=PLN&lunit=km&limit=30&open_now=false&lang=pl_PL&offset=${offset}`;
     
     const options = {
       method: 'GET',
@@ -54,8 +66,14 @@ function App() {
     
     try {
       const response = await fetch(url, options)
-      const restaurant = await response.json()
-      setRestaurants(restaurant)
+      const restaurantsResponse = await response.json()
+      let restaurants : any = []; 
+      restaurantsResponse.data.map((restaurant: any) => {
+        if ( restaurant.photo && restaurant.name !== "" && restaurant.address !== "" && restaurant.rating !== "" && restaurant.phone !== "" && restaurant.website !== "") {
+          restaurants.push(restaurant)
+        }
+      })
+      setRestaurants(restaurants)
     } catch (error) {
       console.log(error)
     }
@@ -130,7 +148,7 @@ function App() {
           <Box display="flex" justifyContent="center" marginTop={2} marginBottom={2}>
             <MySVG width="150px" height="150px"/>
           </Box>
-          <Typography variant="body1">
+          <Typography variant="body1" component="p" justifyContent="center" textAlign="center" marginTop={2} marginBottom={2}>
             Discover new places to eat, read reviews, and make reservations with ease. Sign in to start exploring now.
           </Typography>
           <Box display="flex" justifyContent="center" marginTop={10}>
@@ -156,12 +174,13 @@ function App() {
           ) : (
             <>
               <TabPanel value='1'>
-                <Typography variant="h4" component="h1" marginTop={5}>
-                  Find the best restaurants around you
-                </Typography>
+                {/* loop trough restaurants */}
+                {restaurants.map((restaurant: any) => (
+                  <RestaurantCard restaurant={restaurant} theme={theme} />
+                ))}
               </TabPanel>
               <TabPanel value='2'>
-                <Typography variant="h4" component="h1" marginTop={5}>
+                <Typography variant="h4" component="h1" marginTop={1}>
                   saved
                 </Typography>
               </TabPanel>
