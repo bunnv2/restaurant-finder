@@ -148,7 +148,7 @@ const toggleSenior = () => {
     const options = {
       method: 'GET',
       headers: {
-        'X-RapidAPI-Key': '7ff8216833mshf766ca06c06a2e9p1dc58bjsn4d5b4eb53c58',
+        'X-RapidAPI-Key': process.env.REACT_APP_RAPID_API_KEY,
         'X-RapidAPI-Host': 'travel-advisor.p.rapidapi.com'
       }
     };
