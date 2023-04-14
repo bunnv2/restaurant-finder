@@ -34,7 +34,7 @@ function SignInWithGoogleButton() {
 function App() {
   const [restaurants, setRestaurants] = useState([]);
   const [user] = useAuthState( auth );
-  const [activeTab, setActiveTab] = useState('1');
+  const [activeTab, setActiveTab] = useState('2');
 
   const handleTabChange = (event: React.SyntheticEvent, newValue: string) => {
     if (newValue === '1' && activeTab !== '1') {
